@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "upload-invoice-admin-client-side-solution",
+    "id": "eccc4f24-c8d5-4aaa-9fec-2199c705bf16",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.15.2"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "UploadInvoiceAdmin description"
+      },
+      "longDescription": {
+        "default": "UploadInvoiceAdmin description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "upload-invoice-admin Feature",
+        "description": "The feature that activates elements of the upload-invoice-admin solution.",
+        "id": "28bb843b-4bb0-47ef-822b-5edbedf1798d",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/upload-invoice-admin.sppkg"
+  }
+}

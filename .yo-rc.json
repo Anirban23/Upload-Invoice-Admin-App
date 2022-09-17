@@ -1,0 +1,16 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "version": "1.15.2",
+    "libraryName": "upload-invoice-admin",
+    "libraryId": "eccc4f24-c8d5-4aaa-9fec-2199c705bf16",
+    "environment": "spo",
+    "packageManager": "npm",
+    "solutionName": "UploadInvoiceAdmin",
+    "solutionShortDescription": "UploadInvoiceAdmin description",
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "componentType": "webpart"
+  }
+}
