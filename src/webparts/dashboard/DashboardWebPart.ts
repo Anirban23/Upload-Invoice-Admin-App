@@ -12,6 +12,7 @@ import * as strings from 'DashboardWebPartStrings';
 import Dashboard from './components/Dashboard';
 import { IDashboardProps } from './components/IDashboardProps';
 
+
 export interface IDashboardWebPartProps {
   description: string;
 }
@@ -29,7 +30,10 @@ export default class DashboardWebPart extends BaseClientSideWebPart<IDashboardWe
         isDarkTheme: this._isDarkTheme,
         environmentMessage: this._environmentMessage,
         hasTeamsContext: !!this.context.sdks.microsoftTeams,
-        userDisplayName: this.context.pageContext.user.displayName
+        userDisplayName: this.context.pageContext.user.displayName,
+        spcontext: this.context,
+        siteurl: this.context.pageContext.web.absoluteUrl,
+        webObj: this.context.pageContext.web,
       }
     );
 
@@ -41,6 +45,8 @@ export default class DashboardWebPart extends BaseClientSideWebPart<IDashboardWe
 
     return super.onInit();
   }
+
+  
 
   private _getEnvironmentMessage(): string {
     if (!!this.context.sdks.microsoftTeams) { // running in Teams

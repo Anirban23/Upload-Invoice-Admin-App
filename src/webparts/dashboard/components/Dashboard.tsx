@@ -2,42 +2,244 @@ import * as React from 'react';
 import styles from './Dashboard.module.scss';
 import { IDashboardProps } from './IDashboardProps';
 import { escape } from '@microsoft/sp-lodash-subset';
+import 'office-ui-fabric-react/dist/css/fabric.css';
+import { DefaultButton, Icon, IIconProps, personaPresenceSize, Pivot, PivotItem, TextField } from 'office-ui-fabric-react';
 
-export default class Dashboard extends React.Component<IDashboardProps, {}> {
+import { AgGridColumn, AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/dist/styles/ag-grid.css';
+import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
+
+import { GridApi, SelectionChangedEvent } from 'ag-grid-community';
+import * as pnp from 'sp-pnp-js'
+
+export default class Dashboard extends React.Component<IDashboardProps, any> {
+  [x: string]: any;
+  public constructor(props: IDashboardProps) {
+    super(props);
+    this.state = {
+      AllAssignmentData: [],
+      AllPaymentData: [],
+      DeleteList: '',
+      DeleteID: '',
+      columnDefAssignment: [
+        {
+          headerName: "",
+          field: "ID", width: 50,
+          cellRendererFramework: (item: any) => <div>
+            <Icon iconName='Delete' onClick={() => this.onDeleteButtonClick(item, "Assignment")} />
+          </div>
+        },
+        { headerName: "Assignment Id", field: "AssignmentId", hide: false, width: 150, },
+        { headerName: "Consultant ID", field: "ConsultantID", hide: false, width: 150, },
+        { headerName: "Project Id", field: "ProjectId", hide: false, width: 150, },
+        { headerName: "Approver", field: "Approver", hide: false, width: 150, },
+        { headerName: "Consultant Name", field: "ConsultantName", hide: false, width: 150, },
+      ],
+      columnDefPayment: [
+        {
+          headerName: "",
+          field: "ID", width: 50,
+          cellRendererFramework: (item: any) => <div>
+            <Icon iconName='Delete' onClick={() => this.onDeleteButtonClick(item, "PaymentTerms")} />
+          </div>
+        },
+        { headerName: "Consultant Name", field: "ConsultantName", hide: false, width: 150, },
+        { headerName: "Payment Terms", field: "PaymentTerms", hide: false, width: 150, },
+        { headerName: "Finance Representative", field: "FinanceRepresentative", hide: false, width: 150, },
+        { headerName: "Assignment Id", field: "AssignmentID", hide: false, width: 150, },
+      ],
+      defaultColDef: {
+        resizable: true,
+        sortable: true,
+        filter: true,
+        //floatingFilter: true,
+        //editable: true,
+        unSortIcon: true,
+        //suppressColumnMoveAnimation: true,
+        wrapText: false,
+        //autoHeight: true,
+        //cellStyle: { 'white-space': 'normal', fontSize: '11px' },
+        cellStyle: { fontSize: '10px', paddingLeft: '8px', paddingRight: '0px' },
+        //cellStyle: (params: any) => { 
+        // if (params.node.rowIndex % 2 === 1){
+        //   return{backgroundColor: '#fff',fontSize: '10px', paddingLeft: '8px', paddingRight: '0px'};
+        // }
+        // else{
+        //   return{backgroundColor: 'rgb(175 177 231)', fontSize: '10px', paddingLeft: '8px', paddingRight: '0px'};
+        // }
+
+        // },
+        cellHeaderStyle: { fontSize: '11px' },
+        wrapHeaderText: true,
+        autoHeaderHeight: true,
+        headerClass: { 'white-space': 'normal', fontSize: '110px' },
+        pagination: true,
+        paginationPageSize: 30,
+
+
+      }
+    }
+  }
+
+  public componentDidMount() {
+    this.loadUploadInvoiceAdmin();
+  }
+
+  onGridReady = (params: any) => {
+    this.gridApi = params.api;
+    this.gridColumnApi = params.columnApi;
+  };
+
+  private onDeleteButtonClick = (e: any, listName: string) => {
+    console.log(e.data);
+    this.setState({DeleteList: listName, DeleteID: e.data.ID});
+    var modal = document.getElementById("DeleteModel");
+    modal.style.display = "block";
+  }
+
+  private async onDeleteRecord() {
+    var res = await pnp.sp.web.lists.getByTitle(this.state.DeleteList).items.getById(this.state.DeleteID).delete();
+    console.log(res);
+
+    let selectedData = this.gridApi.getSelectedRows();
+    this.gridApi.applyTransaction({ remove: [selectedData[0]] });
+
+    this.DeleteRecordSpanClose();
+  }
+
+  private DeleteRecordSpanClose() {
+    var modal = document.getElementById("DeleteModel");
+    modal.style.display = "none";
+  }
+
+  private async loadUploadInvoiceAdmin() {
+    const itemAssignment: any = await pnp.sp.web.lists.getByTitle("Assignment").items.select("AssignmentId", "ConsultantID", "ProjectId", "Approver/Title", "ConsultantName/Title", "ID").expand("Approver", "ConsultantName").get();
+    let tempData = [];
+    for (let i = 0; i < itemAssignment.length; i++) {
+      let CN = '';
+      if (itemAssignment[i].ConsultantName !== undefined) {
+        CN = itemAssignment[i].ConsultantName.Title;
+      }
+
+      tempData.push({
+        "AssignmentId": itemAssignment[i].AssignmentId,
+        "ConsultantID": itemAssignment[i].ConsultantID,
+        "ProjectId": itemAssignment[i].ProjectId,
+        "Approver": itemAssignment[i].Approver.Title,
+        "ConsultantName": CN,
+        "ID": itemAssignment[i].ID
+      });
+    }
+    this.setState({ AllAssignmentData: tempData });
+
+
+    const itemPayment: any = await pnp.sp.web.lists.getByTitle("PaymentTerms").items.select("ConsultantName/Title", "PaymentTerms", "FinanceRepresentative/Title", "AssignmentID", "ID").expand("FinanceRepresentative", "ConsultantName").get();
+    let tempDataPayment = [];
+    for (let i = 0; i < itemPayment.length; i++) {
+      tempDataPayment.push({
+        "ConsultantName": itemPayment[i].ConsultantName.Title,
+        "PaymentTerms": itemPayment[i].PaymentTerms,
+        "FinanceRepresentative": itemPayment[i].FinanceRepresentative.Title,
+        "AssignmentID": itemPayment[i].AssignmentID,
+        "ID": itemPayment[i].ID,
+      });
+    }
+    this.setState({ AllPaymentData: tempDataPayment });
+
+
+  }
+
   public render(): React.ReactElement<IDashboardProps> {
-    const {
-      description,
-      isDarkTheme,
-      environmentMessage,
-      hasTeamsContext,
-      userDisplayName
-    } = this.props;
+
 
     return (
-      <section className={`${styles.dashboard} ${hasTeamsContext ? styles.teams : ''}`}>
-        <div className={styles.welcome}>
-          <img alt="" src={isDarkTheme ? require('../assets/welcome-dark.png') : require('../assets/welcome-light.png')} className={styles.welcomeImage} />
-          <h2>Well done, {escape(userDisplayName)}!</h2>
-          <div>{environmentMessage}</div>
-          <div>Web part property value: <strong>{escape(description)}</strong></div>
+      <div>
+        <div id="DeleteModel" className={styles.modal}>
+          <div className={styles['modal-content']} style={{ width: '50%' }}>
+            <div className={styles["modal-header"]}>
+              <span className={styles["close"]} onClick={() => this.spanClose()}>&times;</span>
+              <h2>Delete Confirmation</h2>
+            </div>
+            <div className={styles["modal-body"]}>
+              <div className="ms-Grid-row" style={{border:'1px solid black',padding: '10px'}}>
+                <div className="ms-Grid-col ms-sm12 ms-md12 ms-lg12" style={{height:'50px', marginTop: '10px'}}>
+                  <label>Are you sure to delete?</label>
+                </div>
+                <div className="ms-Grid-col ms-sm12 ms-md12 ms-lg12">
+                  <div className="ms-Grid-row">
+                    <div className="ms-Grid-col ms-sm6 ms-md6 ms-lg6">
+                      <DefaultButton
+                        text="Cancel"
+                        //iconProps={addIcon}
+                        onClick={() => this.DeleteRecordSpanClose()}
+                        style={{width: '100%'}}
+                      //label="Submit"
+                      //allowDisabledFocus
+                      //disabled={disabled}
+                      //checked={checked} 
+                      />
+                    </div>
+                    <div className="ms-Grid-col ms-sm6 ms-md6 ms-lg6">
+                      <DefaultButton
+                        text="Delete"
+                        //iconProps={addIcon}
+                        onClick={() => this.onDeleteRecord()}
+                        style={{width: '100%'}}
+                      //label="Submit"
+                      //allowDisabledFocus
+                      //disabled={disabled}
+                      //checked={checked} 
+                      />
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+            <div className={styles["modal-footer"]}>
+              <h3></h3>
+            </div>
+          </div>
         </div>
-        <div>
-          <h3>Welcome to SharePoint Framework!</h3>
-          <p>
-            The SharePoint Framework (SPFx) is a extensibility model for Microsoft Viva, Microsoft Teams and SharePoint. It&#39;s the easiest way to extend Microsoft 365 with automatic Single Sign On, automatic hosting and industry standard tooling.
-          </p>
-          <h4>Learn more about SPFx development:</h4>
-          <ul className={styles.links}>
-            <li><a href="https://aka.ms/spfx" target="_blank" rel="noreferrer">SharePoint Framework Overview</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-graph" target="_blank" rel="noreferrer">Use Microsoft Graph in your solution</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-teams" target="_blank" rel="noreferrer">Build for Microsoft Teams using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-viva" target="_blank" rel="noreferrer">Build for Microsoft Viva Connections using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-store" target="_blank" rel="noreferrer">Publish SharePoint Framework applications to the marketplace</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-api" target="_blank" rel="noreferrer">SharePoint Framework API reference</a></li>
-            <li><a href="https://aka.ms/m365pnp" target="_blank" rel="noreferrer">Microsoft 365 Developer Community</a></li>
-          </ul>
+
+
+        <div className="ms-Grid-row">
+          <div className="ms-Grid-col ms-sm12 ms-md12 ms-lg12">
+            <Pivot>
+              <PivotItem headerText="Assignment Id">
+                <div className={"ag-theme-alpine"} style={{ height: "450px" }}>
+                  <AgGridReact
+                    columnDefs={this.state.columnDefAssignment}
+                    defaultColDef={this.state.defaultColDef}
+                    rowData={this.state.AllAssignmentData}
+                    //pagination={true} paginationPageSize={5}
+                    animateRows={true}
+                    onGridReady={this.onGridReady}
+                    rowSelection={'single'}
+                  //onSelectionChanged={e => this.AGChange(e)}
+                  >
+                  </AgGridReact>
+                </div>
+              </PivotItem>
+              <PivotItem headerText="Payment Terms">
+                <div className={"ag-theme-alpine"} style={{ height: "450px" }}>
+                  <AgGridReact
+                    columnDefs={this.state.columnDefPayment}
+                    defaultColDef={this.state.defaultColDef}
+                    rowData={this.state.AllPaymentData}
+                    //pagination={true} paginationPageSize={5}
+                    animateRows={true}
+                    onGridReady={this.onGridReady}
+                    rowSelection={'single'}
+                  //onSelectionChanged={e => this.AGChange(e)}
+                  >
+                  </AgGridReact>
+                </div>
+              </PivotItem>
+            </Pivot>
+          </div>
         </div>
-      </section>
+      </div>
     );
   }
 }
