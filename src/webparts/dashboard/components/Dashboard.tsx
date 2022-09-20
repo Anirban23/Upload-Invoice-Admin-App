@@ -26,7 +26,8 @@ export default class Dashboard extends React.Component<IDashboardProps, any> {
           headerName: "",
           field: "ID", width: 50,
           cellRendererFramework: (item: any) => <div>
-            <Icon iconName='Delete' onClick={() => this.onDeleteButtonClick(item, "Assignment")} />
+            <Icon iconName='Delete' onClick={() => this.onDeleteButtonClick(item, "Assignment")} style={{paddingRight:'5px'}}/>
+            <Icon iconName='Edit' onClick={() => this.onDeleteButtonClick(item, "Assignment")}  style={{paddingLeft:'5px'}}/>
           </div>
         },
         { headerName: "Assignment Id", field: "AssignmentId", hide: false, width: 150, },
@@ -41,6 +42,7 @@ export default class Dashboard extends React.Component<IDashboardProps, any> {
           field: "ID", width: 50,
           cellRendererFramework: (item: any) => <div>
             <Icon iconName='Delete' onClick={() => this.onDeleteButtonClick(item, "PaymentTerms")} />
+            <Icon iconName='Edit' onClick={() => this.onDeleteButtonClick(item, "PaymentTerms")} />
           </div>
         },
         { headerName: "Consultant Name", field: "ConsultantName", hide: false, width: 150, },
